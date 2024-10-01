@@ -14,6 +14,10 @@ class AuthService {
       ConfirmationResult confirmationResult = await _auth.signInWithPhoneNumber(
         phoneNumber,
         RecaptchaVerifier(
+          auth: _auth,
+          onSuccess: () => print('reCAPTCHA Completed!'),
+          onError: (FirebaseAuthException error) => print(error),
+          onExpired: () => print('reCAPTCHA Expired!'),
           container: 'recaptcha',
           size: RecaptchaVerifierSize.compact,
           theme: RecaptchaVerifierTheme.light,
