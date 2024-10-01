@@ -31,8 +31,35 @@
 
   <title>phone_auth_app</title>
   <link rel="manifest" href="manifest.json">
+  <script src="https://www.google.com/recaptcha/api.js?render=6LdVqVMqAAAAAKbEt85qGpJzJFnwci3_enaSrJYd"></script>
+  <!-- Add this line to include the reCAPTCHA script -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
 </head>
 <body>
-  <script src="flutter_bootstrap.js" async></script>
+  <!-- Add this div for reCAPTCHA -->
+  <div id="recaptcha"></div>
+
+  <!-- Initialize Firebase and reCAPTCHA -->
+  <script>
+    var firebaseConfig = {
+      apiKey: "AIzaSyDiVSLs3goLrzmndUyLa9Sjp0gs4ovHHhA",
+      authDomain: "utpanna-dev.firebaseapp.com",
+      projectId: "utpanna-dev",
+      storageBucket: "utpanna-dev.appspot.com",
+      messagingSenderId: "340480522275",
+      appId: "1:340480522275:web:a5ee3291e33894978ad996"
+    };
+    firebase.initializeApp(firebaseConfig);
+    
+    // window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
+    //   'size': 'invisible',
+    //   'callback': function(response) {
+    //     // reCAPTCHA solved, allow signInWithPhoneNumber.
+    //   }
+    // });
+  </script>
+  <script src="main.dart.js" type="application/javascript"></script>
+
 </body>
 </html>
