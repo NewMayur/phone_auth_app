@@ -13,15 +13,7 @@ class AuthService {
       // For web platform
       ConfirmationResult confirmationResult = await _auth.signInWithPhoneNumber(
         phoneNumber,
-        RecaptchaVerifier(
-          auth: _auth,
-          onSuccess: () => print('reCAPTCHA Completed!'),
-          onError: (FirebaseAuthException error) => print(error),
-          onExpired: () => print('reCAPTCHA Expired!'),
-          container: 'recaptcha',
-          size: RecaptchaVerifierSize.compact,
-          theme: RecaptchaVerifierTheme.light,
-        ),
+        // js.context['recaptchaVerifier'] as RecaptchaVerifier,
       );
       // Save the confirmationResult for later use when verifying the OTP
       print("Web: Confirmation result received: ${confirmationResult.verificationId}");
@@ -43,12 +35,12 @@ class AuthService {
     }
   }
 
-  Future<void> signInWithOTP(String verificationId, String smsCode) async {
+  Future<UserCredential> signInWithOTP(String verificationId, String smsCode) async {
     PhoneAuthCredential credential = PhoneAuthProvider.credential(
       verificationId: verificationId,
       smsCode: smsCode,
     );
-    await _auth.signInWithCredential(credential);
+    return await _auth.signInWithCredential(credential);
   }
 
   Future<void> signIn(PhoneAuthCredential credential) async {
