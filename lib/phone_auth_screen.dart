@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'auth_service.dart';
+import 'home_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class PhoneAuthScreen extends StatefulWidget {
   @override
@@ -13,6 +15,7 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
   final AuthService _authService = AuthService();
   String? _verificationId;
   bool _isLoading = false;
+  bool _codeSent = false;
 
   @override
   Widget build(BuildContext context) {
@@ -25,19 +28,26 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
             TextField(
               controller: _phoneController,
               decoration: InputDecoration(labelText: 'Phone Number'),
+              keyboardType: TextInputType.phone,
             ),
+            SizedBox(height: 16),
             ElevatedButton(
               onPressed: _isLoading ? null : _verifyPhoneNumber,
               child: _isLoading ? CircularProgressIndicator() : Text('Verify Phone Number'),
             ),
-            TextField(
-              controller: _otpController,
-              decoration: InputDecoration(labelText: 'OTP'),
-            ),
-            ElevatedButton(
-              onPressed: _verificationId == null ? null : _signInWithOTP,
-              child: Text('Sign In'),
-            ),
+            if (_codeSent) ...[
+              SizedBox(height: 16),
+              TextField(
+                controller: _otpController,
+                decoration: InputDecoration(labelText: 'OTP'),
+                keyboardType: TextInputType.number,
+              ),
+              SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: _signInWithOTP,
+                child: Text('Sign In'),
+              ),
+            ],
           ],
         ),
       ),
@@ -50,11 +60,31 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
     });
 
     try {
-      await _authService.verifyPhoneNumber(_phoneController.text);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Verification code sent')),
+      await _authService.verifyPhoneNumber(
+        _phoneController.text,
+        (String verificationId) {
+          setState(() {
+            _verificationId = verificationId;
+            _isLoading = false;
+            _codeSent = true;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Verification code sent')),
+          );
+        },
+        (String error) {
+          setState(() {
+            _isLoading = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error: $error')),
+          );
+        },
       );
     } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: $e')),
       );
@@ -66,11 +96,25 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
   }
 
   Future<void> _signInWithOTP() async {
-    try {
-      await _authService.signInWithOTP(_verificationId!, _otpController.text);
+    if (_verificationId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Successfully signed in')),
+        SnackBar(content: Text('Verification ID is null. Please try again.')),
       );
+      return;
+    }
+
+    try {
+      UserCredential userCredential = await _authService.signInWithOTP(_verificationId!, _otpController.text);
+      if (userCredential.user != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Successfully signed in')),
+        );
+        // Navigate to the next screen or perform any other action after successful sign-in
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to sign in. Please try again.')),
+        );
+      }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: $e')),

@@ -8,15 +8,22 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  Future<void> verifyPhoneNumber(String phoneNumber) async {
+  Future<void> verifyPhoneNumber(
+    String phoneNumber,
+    Function(String) onCodeSent,
+    Function(String) onError,
+  ) async {
     if (kIsWeb) {
       // For web platform
-      ConfirmationResult confirmationResult = await _auth.signInWithPhoneNumber(
-        phoneNumber,
-        // js.context['recaptchaVerifier'] as RecaptchaVerifier,
-      );
-      // Save the confirmationResult for later use when verifying the OTP
-      print("Web: Confirmation result received: ${confirmationResult.verificationId}");
+      try {
+        ConfirmationResult confirmationResult = await _auth.signInWithPhoneNumber(
+          phoneNumber,
+          // RecaptchaVerifier(container: 'recaptcha-container'),
+        );
+        onCodeSent(confirmationResult.verificationId);
+      } catch (e) {
+        onError(e.toString());
+      }
     } else {
       // For mobile platforms
       await _auth.verifyPhoneNumber(
@@ -25,10 +32,10 @@ class AuthService {
           await _auth.signInWithCredential(credential);
         },
         verificationFailed: (FirebaseAuthException e) {
-          print('Verification failed: ${e.message}');
+          onError(e.message ?? 'Verification failed');
         },
         codeSent: (String verificationId, int? resendToken) {
-          print("Mobile: Verification ID received: $verificationId");
+          onCodeSent(verificationId);
         },
         codeAutoRetrievalTimeout: (String verificationId) {},
       );
